@@ -1,11 +1,13 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import '../widgets/reminder_dropdown.dart';
 
 class ReminderScreen extends StatefulWidget {
   const ReminderScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ReminderScreenState createState() => _ReminderScreenState();
 }
 
@@ -13,6 +15,10 @@ class _ReminderScreenState extends State<ReminderScreen> {
   String? _selectedDay;
   String? _selectedActivity;
   DateTime _selectedTime = DateTime.now();
+  List<String> _reminders = [];
+
+  String? _dayError;
+  String? _activityError;
 
   final List<String> daysOfWeek = [
     'Monday',
@@ -52,9 +58,13 @@ class _ReminderScreenState extends State<ReminderScreen> {
               onChanged: (value) {
                 setState(() {
                   _selectedDay = value;
+                  _dayError = null;
                 });
               },
             ),
+            _dayError != null
+                ? Text(_dayError!, style: const TextStyle(color: Colors.red))
+                : const SizedBox(),
             const SizedBox(height: 20.0),
             ReminderDropdown(
               options: activities,
@@ -62,9 +72,14 @@ class _ReminderScreenState extends State<ReminderScreen> {
               onChanged: (value) {
                 setState(() {
                   _selectedActivity = value;
+                  _activityError = null;
                 });
               },
             ),
+            _activityError != null
+                ? Text(_activityError!,
+                    style: const TextStyle(color: Colors.red))
+                : const SizedBox(),
             const SizedBox(height: 20.0),
             Row(
               children: [
@@ -75,7 +90,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
                     _selectTime(context);
                   },
                   child: Text(
-                    '${_selectedTime.hour}:${_selectedTime.minute}',
+                    '${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}',
                     style: const TextStyle(fontSize: 16.0),
                   ),
                 ),
@@ -84,15 +99,72 @@ class _ReminderScreenState extends State<ReminderScreen> {
             const SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
-                // Add reminder functionality here
-                // You can use _selectedDay, _selectedActivity, and _selectedTime to create a reminder
+                _validateAndSetReminder();
               },
               child: const Text('Set Reminder'),
+            ),
+            const SizedBox(height: 20.0),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _reminders.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(
+                      _reminders[index],
+                      style: const TextStyle(
+                          fontSize: 16.0, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _validateAndSetReminder() {
+    setState(() {
+      if (_selectedDay == null) {
+        _dayError = 'Please select a day of the week';
+      }
+      if (_selectedActivity == null) {
+        _activityError = 'Please select an activity';
+      }
+
+      if (_selectedDay != null && _selectedActivity != null) {
+        _scheduleReminder();
+      }
+    });
+  }
+
+  void _scheduleReminder() {
+    final now = DateTime.now();
+    final reminderTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final difference = reminderTime.difference(now).inSeconds;
+    if (difference > 0) {
+      setState(() {
+        _reminders.add(
+            'Reminder set for $_selectedActivity on $_selectedDay at ${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}');
+      });
+
+      Future.delayed(Duration(seconds: difference), () {
+        _playSound();
+        // Show notification or alert dialog here
+      });
+    }
+  }
+
+  void _playSound() {
+    FlutterRingtonePlayer().playNotification();
   }
 
   Future<void> _selectTime(BuildContext context) async {
