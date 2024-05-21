@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:test_project/models/reminder.dart';
 import '../widgets/reminder_dropdown.dart';
 
 class ReminderScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
   String? _selectedDay;
   String? _selectedActivity;
   DateTime _selectedTime = DateTime.now();
-  List<String> _reminders = [];
+  List<Reminder> reminders = [];
 
   String? _dayError;
   String? _activityError;
@@ -106,11 +107,11 @@ class _ReminderScreenState extends State<ReminderScreen> {
             const SizedBox(height: 20.0),
             Expanded(
               child: ListView.builder(
-                itemCount: _reminders.length,
+                itemCount: reminders.length,
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text(
-                      _reminders[index],
+                      reminders[index] as String,
                       style: const TextStyle(
                           fontSize: 16.0, fontWeight: FontWeight.bold),
                     ),
@@ -152,8 +153,9 @@ class _ReminderScreenState extends State<ReminderScreen> {
     final difference = reminderTime.difference(now).inSeconds;
     if (difference > 0) {
       setState(() {
-        _reminders.add(
-            'Reminder set for $_selectedActivity on $_selectedDay at ${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}');
+        reminders.add(
+            'Reminder set for $_selectedActivity on $_selectedDay at ${_selectedTime.hour}:${_selectedTime.minute.toString().padLeft(2, '0')}'
+                as Reminder);
       });
 
       Future.delayed(Duration(seconds: difference), () {
